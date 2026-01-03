@@ -36,6 +36,7 @@ export default function ProductCard({ id, name, price, category, image }: Produc
                 <div className="absolute bottom-3 right-3 z-10 translate-y-12 transition-all group-hover:translate-y-0">
                     <Button
                         size="icon"
+                        variant="brand"
                         onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();

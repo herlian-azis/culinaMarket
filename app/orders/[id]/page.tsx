@@ -97,7 +97,7 @@ export default function OrderDetailPage() {
     const getStatusIcon = (status: string) => {
         switch (status) {
             case 'Delivered':
-                return <CheckCircle className="w-5 h-5 text-green-500" />;
+                return <CheckCircle className="w-5 h-5 text-culina-green" />;
             default:
                 return <Clock className="w-5 h-5 text-blue-500" />;
         }
@@ -106,7 +106,7 @@ export default function OrderDetailPage() {
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'Delivered':
-                return 'bg-green-100 text-green-800';
+                return 'bg-culina-green/10 text-culina-green';
             case 'Processing':
             case 'Shipped':
                 return 'bg-blue-100 text-blue-800';

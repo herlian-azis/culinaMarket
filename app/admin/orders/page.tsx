@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { Pagination } from '@/components/ui/Pagination';
 
 type Order = {
     id: string;
@@ -149,19 +150,22 @@ export default function AdminOrdersPage() {
                         leftIcon={<Search className="w-5 h-5" />}
                     />
                 </div>
-                <select
-                    value={statusFilter}
-                    onChange={(e) => {
-                        setStatusFilter(e.target.value);
-                        setCurrentPage(1);
-                    }}
-                    className="px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:outline-none"
-                >
-                    <option value="">All Status</option>
-                    {statusOptions.map(status => (
-                        <option key={status} value={status}>{status}</option>
-                    ))}
-                </select>
+                <div className="relative">
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => {
+                            setStatusFilter(e.target.value);
+                            setCurrentPage(1);
+                        }}
+                        className="appearance-none pl-4 pr-10 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:outline-none"
+                    >
+                        <option value="">All Status</option>
+                        {statusOptions.map(status => (
+                            <option key={status} value={status}>{status}</option>
+                        ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
             </div>
 
             {/* Orders Table */}
@@ -238,56 +242,18 @@ export default function AdminOrdersPage() {
             </Card>
 
             {/* Pagination Controls */}
-            <div className="flex items-center justify-between bg-white px-4 py-3 border border-gray-200 rounded-lg sm:px-6">
-                <div className="flex flex-1 justify-between sm:hidden">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(curr => Math.max(1, curr - 1))}
-                        disabled={currentPage === 1}
-                    >
-                        Previous
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(curr => Math.min(totalPages, curr + 1))}
-                        disabled={currentPage === totalPages}
-                        className="ml-3"
-                    >
-                        Next
-                    </Button>
+            {totalPages > 1 && (
+                <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                    <p className="text-sm text-gray-500">
+                        Showing page <span className="font-semibold text-gray-900">{currentPage}</span> of <span className="font-semibold text-gray-900">{totalPages}</span>
+                    </p>
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                    />
                 </div>
-                <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                    <div>
-                        <p className="text-sm text-gray-700">
-                            Showing page <span className="font-medium">{currentPage}</span> of <span className="font-medium">{totalPages}</span>
-                        </p>
-                    </div>
-                    <div>
-                        <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                            <Button
-                                variant="outline"
-                                onClick={() => setCurrentPage(curr => Math.max(1, curr - 1))}
-                                disabled={currentPage === 1}
-                                className="rounded-r-none px-2"
-                            >
-                                <span className="sr-only">Previous</span>
-                                <ChevronLeft className="h-5 w-5" aria-hidden="true" />
-                            </Button>
-                            <Button
-                                variant="outline"
-                                onClick={() => setCurrentPage(curr => Math.min(totalPages, curr + 1))}
-                                disabled={currentPage === totalPages}
-                                className="rounded-l-none px-2"
-                            >
-                                <span className="sr-only">Next</span>
-                                <ChevronRight className="h-5 w-5" aria-hidden="true" />
-                            </Button>
-                        </nav>
-                    </div>
-                </div>
-            </div>
+            )}
         </div>
     );
 }

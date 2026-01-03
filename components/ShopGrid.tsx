@@ -53,7 +53,7 @@ export default function ShopGrid({ products }: ShopGridProps) {
                     <Button
                         key={cat}
                         onClick={() => setActiveCategory(cat)}
-                        variant={activeCategory === cat ? 'primary' : 'outline'}
+                        variant={activeCategory === cat ? 'brand' : 'outline'}
                         className={`rounded-full ${activeCategory !== cat ? 'bg-white text-gray-600 border-gray-200' : ''}`}
                         size="sm"
                     >
@@ -81,7 +81,7 @@ export default function ShopGrid({ products }: ShopGridProps) {
                         <Button
                             variant="ghost"
                             onClick={() => setActiveCategory('All')}
-                            className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                            className="text-culina-green hover:text-emerald-700 hover:bg-emerald-50"
                         >
                             View all products
                         </Button>

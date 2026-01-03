@@ -104,6 +104,7 @@ export default function RecipeCard({ id, title, description, difficulty, prep_ti
                     <Button
                         onClick={handleAddAll}
                         size="sm"
+                        variant="brand"
                         className="rounded-full" // Keep it pill shaped to match design preference or remove to standardise? I'll keep it pill for now as it looks better in card footers often.
                     >
                         Add All

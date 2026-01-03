@@ -33,6 +33,7 @@ export default function AddRecipeIngredients({ ingredients }: { ingredients: Ing
             onClick={handleAddAll}
             className="w-full py-6 font-bold text-base shadow-sm"
             size="lg"
+            variant="brand"
         >
             Add All Ingredients
         </Button>
