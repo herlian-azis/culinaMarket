@@ -1,15 +1,21 @@
-
 import Navbar from '@/components/Navbar';
 import ShopGrid from '@/components/ShopGrid';
 import Link from 'next/link';
-import { getBaseUrl } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
+import { Suspense } from 'react';
 
 async function getProducts() {
-    const res = await fetch(`${getBaseUrl()}/api/products`, { cache: 'no-store' });
-    if (!res.ok) {
+    const { data, error } = await supabase
+        .from('products')
+        .select('id, name, price, stock_quantity, image_url, category')
+        .eq('is_deleted', false)
+        .order('name');
+
+    if (error) {
+        console.error('Failed to fetch products:', error);
         return [];
     }
-    return res.json();
+    return data || [];
 }
 
 export default async function ShopPage() {
@@ -37,7 +43,9 @@ export default async function ShopPage() {
                     </div>
 
                     {/* Client Grid with Filtering */}
-                    <ShopGrid products={products} />
+                    <Suspense fallback={<div className="py-20 text-center">Loading products...</div>}>
+                        <ShopGrid products={products} />
+                    </Suspense>
                 </div>
             </main>
         </div>

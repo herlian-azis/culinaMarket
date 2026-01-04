@@ -6,18 +6,28 @@ import Image from 'next/image';
 import { Bot, Leaf, Utensils, Truck, Carrot, Apple, Beef, Milk, Croissant, Package } from 'lucide-react';
 
 import RecipeCard from '@/components/RecipeCard';
-import { getBaseUrl } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
 
 async function getProducts() {
-  const res = await fetch(`${getBaseUrl()}/api/products`, { cache: 'no-store' });
-  if (!res.ok) return [];
-  return res.json();
+  const { data, error } = await supabase
+    .from('products')
+    .select('id, name, price, stock_quantity, image_url, category')
+    .eq('is_deleted', false)
+    .limit(10);
+  if (error) return [];
+  return data || [];
 }
 
 async function getRecipes() {
-  const res = await fetch(`${getBaseUrl()}/api/recipes`, { cache: 'no-store' });
-  if (!res.ok) return [];
-  return res.json();
+  const { data, error } = await supabase
+    .from('recipes')
+    .select(`
+      id, title, description, difficulty_level, prep_time_minutes, image_url,
+      recipe_ingredients ( unit, quantity_required, products!recipe_ingredients_product_id_fkey ( id, name, price, image_url ) )
+    `)
+    .limit(5);
+  if (error) return [];
+  return data || [];
 }
 
 

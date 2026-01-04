@@ -1,14 +1,21 @@
 import Navbar from '@/components/Navbar';
 import RecipeCard from '@/components/RecipeCard';
-import { getBaseUrl } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
 
 async function getRecipes() {
-    const res = await fetch(`${getBaseUrl()}/api/recipes`, { cache: 'no-store' });
-    if (!res.ok) {
-        console.error('Failed to fetch recipes:', res.statusText);
+    const { data, error } = await supabase
+        .from('recipes')
+        .select(`
+            id, title, description, difficulty_level, prep_time_minutes, image_url,
+            recipe_ingredients ( unit, quantity_required, products!recipe_ingredients_product_id_fkey ( id, name, price, image_url ) )
+        `)
+        .limit(20);
+
+    if (error) {
+        console.error('Failed to fetch recipes:', error);
         return [];
     }
-    return res.json();
+    return data || [];
 }
 
 export default async function RecipesPage() {

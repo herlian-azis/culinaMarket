@@ -3,16 +3,12 @@
 import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/Button';
 
-interface Ingredient {
-    products: {
-        id: string;
-        name: string;
-        price: number;
-        image_url?: string;
-    };
+// Accept any structure from the API to handle both array and object returns from Supabase relations
+interface Props {
+    ingredients: any[];
 }
 
-export default function AddRecipeIngredients({ ingredients }: { ingredients: Ingredient[] }) {
+export default function AddRecipeIngredients({ ingredients }: Props) {
     const { addItem } = useCart();
 
     const handleAddAll = () => {

@@ -1,16 +1,23 @@
-
 import Navbar from '@/components/Navbar';
 import AddRecipeIngredients from '@/components/AddRecipeIngredients';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Clock, ChefHat, Users, Flame, Zap, Beef, Wheat, Droplets, ArrowLeft, BookOpen } from 'lucide-react';
-import { getBaseUrl } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
 
 async function getRecipe(id: string) {
-    const res = await fetch(`${getBaseUrl()}/api/recipes/${id}`, { cache: 'no-store' });
-    if (!res.ok) return null;
-    return res.json();
+    const { data, error } = await supabase
+        .from('recipes')
+        .select(`
+            id, title, description, difficulty_level, prep_time_minutes, image_url, instructions,
+            recipe_ingredients ( quantity_required, unit, products!recipe_ingredients_product_id_fkey ( id, name, price, image_url, nutrition_info ) )
+        `)
+        .eq('id', id)
+        .single();
+
+    if (error) return null;
+    return data;
 }
 
 export default async function RecipeDetailPage({ params }: { params: Promise<{ id: string }> }) {
