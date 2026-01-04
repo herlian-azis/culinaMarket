@@ -86,7 +86,7 @@ export default async function Home() {
           </svg>
           <div className="mx-auto max-w-7xl px-6 pb-24 pt-10 sm:pb-32 lg:flex lg:px-8 lg:py-20">
             <div className="mx-auto max-w-2xl lg:mx-0 lg:max-w-xl lg:shrink-0 lg:pt-8">
-              <div className="mt-24 sm:mt-16 lg:mt-0">
+              <div className="mt-8 sm:mt-9 lg:mt-0">
                 <div className="inline-flex space-x-6">
                   <span className="rounded-full bg-culina-green/10 px-3 py-1 text-sm font-semibold leading-6 text-culina-green ring-1 ring-inset ring-culina-green/10">
                     Latest updates
@@ -117,14 +117,14 @@ export default async function Home() {
               </div>
             </div>
             <div className="mx-auto mt-16 flex max-w-2xl sm:mt-24 lg:ml-10 lg:mt-0 lg:mr-0 lg:max-w-none lg:flex-none xl:ml-32">
-              <div className="max-w-3xl flex-none sm:max-w-5xl lg:max-w-none relative animate-[float_6s_ease-in-out_infinite]">
+              <div className="max-w-full flex-none sm:max-w-5xl lg:max-w-none relative animate-[float_6s_ease-in-out_infinite]">
                 <div className="absolute -inset-y-px -left-4 -z-10 bg-culina-green/20 opacity-20 ring-1 ring-white" style={{ clipPath: 'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)' }}></div>
                 <Image
                   src="/images/hero-fresh.png"
                   alt="App screenshot"
                   width={600}
                   height={600}
-                  className="w-xl rounded-md bg-white/5 shadow-2xl ring-1 ring-white/10"
+                  className="w-full max-w-160 rounded-md bg-white/5 shadow-2xl ring-1 ring-white/10"
                 />
               </div>
             </div>
