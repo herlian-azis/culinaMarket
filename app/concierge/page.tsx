@@ -28,7 +28,19 @@ export default function ConciergePage() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
+    const isInitialRender = useRef(true);
+
+    // Scroll to top on mount
     useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
+
+    useEffect(() => {
+        // Skip scroll on initial render
+        if (isInitialRender.current) {
+            isInitialRender.current = false;
+            return;
+        }
         scrollToBottom();
     }, [messages, isTyping]);
 
@@ -78,10 +90,10 @@ export default function ConciergePage() {
     };
 
     return (
-        <div className="min-h-screen bg-culina-off-white flex flex-col">
+        <div className="h-screen bg-culina-off-white flex flex-col overflow-hidden">
             <Navbar />
 
-            <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col h-[calc(100vh-80px)]">
+            <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col overflow-hidden">
                 <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
 
                     {/* Header */}

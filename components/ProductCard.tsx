@@ -52,7 +52,7 @@ export default function ProductCard({ id, name, price, category, image }: Produc
             {/* Details */}
             <div>
                 <h3 className="text-sm font-medium text-gray-900">
-                    <Link href="#">
+                    <Link href={`/shop/${id}`}>
                         <span aria-hidden="true" className="absolute inset-0 z-0" />
                         {name}
                     </Link>

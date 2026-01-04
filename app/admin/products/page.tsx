@@ -80,6 +80,79 @@ export default function AdminProductsPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const itemsPerPage = 8; // Showing 8 products per page for grid layout (4x2)
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [uploadingImage, setUploadingImage] = useState(false);
+    const [urlError, setUrlError] = useState<string | null>(null);
+    const [validatingUrl, setValidatingUrl] = useState(false);
+
+    const validateImageUrl = async (url: string): Promise<boolean> => {
+        if (!url) return true;
+
+        // Check if URL format is valid
+        try {
+            new URL(url);
+        } catch {
+            setUrlError('URL tidak valid');
+            return false;
+        }
+
+        // Check if URL points to an image
+        setValidatingUrl(true);
+        return new Promise((resolve) => {
+            const img = new window.Image();
+            img.onload = () => {
+                setUrlError(null);
+                setValidatingUrl(false);
+                resolve(true);
+            };
+            img.onerror = () => {
+                setUrlError('URL bukan gambar valid');
+                setValidatingUrl(false);
+                resolve(false);
+            };
+            img.src = url;
+
+            // Timeout after 5 seconds
+            setTimeout(() => {
+                if (validatingUrl) {
+                    setUrlError('Timeout: URL tidak dapat diakses');
+                    setValidatingUrl(false);
+                    resolve(false);
+                }
+            }, 5000);
+        });
+    };
+
+    const handleImageUpload = async (file: File): Promise<string | null> => {
+        setUploadingImage(true);
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+            const filePath = `products/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('product-images')
+                .upload(filePath, file);
+
+            if (uploadError) {
+                console.error('Upload error:', uploadError);
+                setNotification({ message: 'Gagal upload gambar: ' + uploadError.message, type: 'error' });
+                setTimeout(() => setNotification(null), 3000);
+                return null;
+            }
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('product-images')
+                .getPublicUrl(filePath);
+
+            return publicUrl;
+        } catch (error) {
+            console.error('Upload error:', error);
+            return null;
+        } finally {
+            setUploadingImage(false);
+        }
+    };
 
     useEffect(() => {
         fetchProducts();
@@ -144,6 +217,19 @@ export default function AdminProductsPage() {
         e.preventDefault();
         setSaving(true);
 
+        let finalImageUrl = form.image_url;
+
+        // If there's a file to upload, upload it first
+        if (imageFile) {
+            const uploadedUrl = await handleImageUpload(imageFile);
+            if (uploadedUrl) {
+                finalImageUrl = uploadedUrl;
+            } else {
+                setSaving(false);
+                return; // Upload failed, don't proceed
+            }
+        }
+
         if (editingId) {
             // Update
             const { error } = await supabase
@@ -154,7 +240,7 @@ export default function AdminProductsPage() {
                     sku: form.sku,
                     price: form.price,
                     stock_quantity: form.stock_quantity,
-                    image_url: form.image_url,
+                    image_url: finalImageUrl,
                     description: form.description,
                     nutrition_info: form.nutrition_info
                 })
@@ -163,6 +249,7 @@ export default function AdminProductsPage() {
             if (!error) {
                 fetchProducts();
                 setIsModalOpen(false);
+                setImageFile(null);
                 setNotification({ message: 'Produk berhasil diperbarui!', type: 'success' });
                 setTimeout(() => setNotification(null), 3000);
             }
@@ -176,7 +263,7 @@ export default function AdminProductsPage() {
                     sku: form.sku,
                     price: form.price,
                     stock_quantity: form.stock_quantity,
-                    image_url: form.image_url,
+                    image_url: finalImageUrl,
                     description: form.description,
                     nutrition_info: form.nutrition_info
                 });
@@ -184,6 +271,7 @@ export default function AdminProductsPage() {
             if (!error) {
                 fetchProducts();
                 setIsModalOpen(false);
+                setImageFile(null);
                 setNotification({ message: 'Produk berhasil ditambahkan!', type: 'success' });
                 setTimeout(() => setNotification(null), 3000);
             }
@@ -234,10 +322,10 @@ export default function AdminProductsPage() {
         <div className="space-y-6">
             {/* Modern Toast Notification */}
             {notification && (
-                <div className="fixed top-20 right-6 z-50 animate-[slideIn_0.3s_ease-out]">
+                <div className="fixed top-20 right-6 z-[100] animate-[slideIn_0.3s_ease-out]">
                     <div className={`flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl backdrop-blur-sm border ${notification.type === 'success'
-                        ? 'bg-gradient-to-r from-emerald-500/90 to-green-500/90 border-emerald-400/30 text-white'
-                        : 'bg-gradient-to-r from-red-500/90 to-rose-500/90 border-red-400/30 text-white'
+                        ? 'bg-linear-to-r from-emerald-500/90 to-green-500/90 border-emerald-400/30 text-white'
+                        : 'bg-linear-to-r from-red-500/90 to-rose-500/90 border-red-400/30 text-white'
                         }`}>
                         <div className={`p-2 rounded-full ${notification.type === 'success' ? 'bg-white/20' : 'bg-white/20'}`}>
                             <CheckCircle className="w-5 h-5" />
@@ -269,7 +357,7 @@ export default function AdminProductsPage() {
             </div>
 
             {/* Search */}
-            <div className="max-w-md">
+            <div className="flex-1">
                 <Input
                     placeholder="Search products..."
                     value={search}
@@ -352,7 +440,7 @@ export default function AdminProductsPage() {
             {
                 isModalOpen && (
                     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-[fadeIn_0.2s_ease-out]">
-                        <div className="bg-white rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-y-auto shadow-2xl animate-[scaleIn_0.2s_ease-out]">
+                        <div className="bg-white rounded-xl w-full max-w-5xl max-h-[90vh] overflow-y-auto shadow-2xl animate-[scaleIn_0.2s_ease-out]">
                             <div className="flex items-center justify-between p-6 border-b border-gray-100">
                                 <h2 className="text-lg font-bold text-gray-900">
                                     {editingId ? 'Edit Product' : 'Add Product'}
@@ -489,37 +577,169 @@ export default function AdminProductsPage() {
                                             </div>
                                         </div>
 
-                                        {/* Image URL */}
+                                        {/* Image Upload */}
                                         <div className="space-y-4">
                                             <h3 className="text-sm font-semibold text-gray-900 border-b pb-2">Media</h3>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+
+                                            {/* Unified Upload/Preview Area */}
+                                            <div
+                                                className={`relative aspect-[4/3] rounded-xl overflow-hidden border-2 border-dashed transition-all group
+                                                    ${uploadingImage ? 'pointer-events-none cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
+                                                style={{
+                                                    borderColor: form.image_url ? '#10b981' : '#d1d5db',
+                                                    backgroundColor: form.image_url ? 'transparent' : '#f9fafb'
+                                                }}
+                                                onDragOver={(e) => { if (!uploadingImage) { e.preventDefault(); e.stopPropagation(); } }}
+                                                onDrop={(e) => {
+                                                    if (uploadingImage) return;
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    const file = e.dataTransfer.files?.[0];
+                                                    if (file && file.type.startsWith('image/')) {
+                                                        // Check file size (5MB limit)
+                                                        const maxSize = 5 * 1024 * 1024; // 5MB
+                                                        if (file.size > maxSize) {
+                                                            setNotification({ message: 'Ukuran gambar maksimal 5MB', type: 'error' });
+                                                            setTimeout(() => setNotification(null), 3000);
+                                                            return;
+                                                        }
+                                                        setImageFile(file);
+                                                        setForm({ ...form, image_url: URL.createObjectURL(file) });
+                                                    }
+                                                }}
+                                                onClick={() => !uploadingImage && document.getElementById('image-upload')?.click()}
+                                            >
                                                 <input
-                                                    type="url"
-                                                    value={form.image_url}
-                                                    onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-                                                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:outline-none"
-                                                    placeholder="https://..."
+                                                    id="image-upload"
+                                                    type="file"
+                                                    accept="image/jpeg,image/png,image/webp,image/gif"
+                                                    className="hidden"
+                                                    disabled={uploadingImage}
+                                                    onChange={(e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (file) {
+                                                            // Check file size (5MB limit)
+                                                            const maxSize = 5 * 1024 * 1024; // 5MB
+                                                            if (file.size > maxSize) {
+                                                                setNotification({ message: 'Ukuran gambar maksimal 5MB', type: 'error' });
+                                                                setTimeout(() => setNotification(null), 3000);
+                                                                e.target.value = ''; // Reset input
+                                                                return;
+                                                            }
+                                                            setImageFile(file);
+                                                            setForm({ ...form, image_url: URL.createObjectURL(file) });
+                                                        }
+                                                    }}
                                                 />
-                                            </div>
-                                            {/* Image Preview */}
-                                            <div className="aspect-video relative bg-gray-50 rounded-lg overflow-hidden border border-dashed border-gray-300 flex items-center justify-center">
+
                                                 {form.image_url ? (
-                                                    <Image
-                                                        src={form.image_url}
-                                                        alt="Preview"
-                                                        fill
-                                                        className="object-cover"
-                                                        unoptimized
-                                                        onError={(e) => {
-                                                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400?text=Invalid+Image+URL';
-                                                        }}
-                                                    />
+                                                    <>
+                                                        {/* Image Preview */}
+                                                        <Image
+                                                            src={form.image_url}
+                                                            alt="Preview"
+                                                            fill
+                                                            className="object-cover"
+                                                            unoptimized
+                                                            onError={(e) => {
+                                                                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400?text=Invalid+Image';
+                                                            }}
+                                                        />
+                                                        {/* Hover Overlay */}
+                                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center pointer-events-none">
+                                                            <ImageIcon className="w-8 h-8 text-white mb-2" />
+                                                            <p className="text-white text-sm font-medium">Klik untuk ganti gambar</p>
+                                                        </div>
+                                                        {/* Remove Button */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setImageFile(null);
+                                                                setForm({ ...form, image_url: '' });
+                                                            }}
+                                                            className="absolute top-3 right-3 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg z-10"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                        </button>
+                                                        {/* File name badge */}
+                                                        {imageFile && (
+                                                            <div className="absolute bottom-3 left-3 right-3 bg-black/60 backdrop-blur-sm text-white text-xs px-3 py-2 rounded-lg truncate">
+                                                                📎 {imageFile.name}
+                                                            </div>
+                                                        )}
+                                                    </>
                                                 ) : (
-                                                    <div className="text-gray-400 text-sm flex flex-col items-center">
-                                                        <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
-                                                        <span>Preview Image</span>
+                                                    /* Empty State - Upload UI */
+                                                    <div className="absolute inset-0 flex flex-col items-center justify-center p-6 hover:bg-gray-100/50 transition-colors">
+                                                        <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mb-4">
+                                                            <ImageIcon className="w-8 h-8 text-emerald-600" />
+                                                        </div>
+                                                        <p className="text-sm font-medium text-gray-700 text-center">
+                                                            Drag & drop gambar atau klik untuk upload
+                                                        </p>
+                                                        <p className="text-xs text-gray-500 mt-2">
+                                                            JPEG, PNG, WebP, GIF (Max 5MB)
+                                                        </p>
                                                     </div>
+                                                )}
+
+                                                {/* Upload Progress Overlay */}
+                                                {uploadingImage && (
+                                                    <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center z-20">
+                                                        <div className="h-10 w-10 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent mb-3"></div>
+                                                        <p className="text-sm font-medium text-emerald-600">Mengupload gambar...</p>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* OR Divider */}
+                                            <div className="flex items-center gap-4">
+                                                <div className="flex-1 h-px bg-gray-200"></div>
+                                                <span className="text-xs text-gray-400 uppercase">atau gunakan URL</span>
+                                                <div className="flex-1 h-px bg-gray-200"></div>
+                                            </div>
+
+                                            {/* URL Input */}
+                                            <div>
+                                                <div className="relative">
+                                                    <input
+                                                        type="url"
+                                                        value={imageFile ? '' : form.image_url}
+                                                        onChange={(e) => {
+                                                            setImageFile(null);
+                                                            setUrlError(null);
+                                                            setForm({ ...form, image_url: e.target.value });
+                                                        }}
+                                                        onBlur={async (e) => {
+                                                            const url = e.target.value;
+                                                            if (url && !imageFile) {
+                                                                await validateImageUrl(url);
+                                                            }
+                                                        }}
+                                                        className={`w-full px-4 py-2.5 rounded-lg border bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:outline-none text-sm pr-10
+                                                            ${urlError
+                                                                ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
+                                                                : 'border-gray-300 focus:border-emerald-500 focus:ring-emerald-200'}
+                                                            ${(!!imageFile || uploadingImage || validatingUrl) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                        placeholder="Paste image URL here..."
+                                                        disabled={!!imageFile || uploadingImage || validatingUrl}
+                                                    />
+                                                    {/* Validation spinner */}
+                                                    {validatingUrl && (
+                                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent"></div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {/* Error message */}
+                                                {urlError && (
+                                                    <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1">
+                                                        <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                        </svg>
+                                                        {urlError}
+                                                    </p>
                                                 )}
                                             </div>
                                         </div>

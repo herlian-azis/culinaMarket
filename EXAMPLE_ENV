@@ -1,9 +1,12 @@
-# Copy this file to .env.local and update with your actual password
-DATABASE_URL="postgres://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres"
+# Copy this file to .env.local
 
-# Supabase Client Config
-NEXT_PUBLIC_SUPABASE_URL="https://[PROJECT-REF].supabase.co"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="[YOUR_ANON_KEY]"
+# Supabase REST API (used by @supabase/supabase-js client)
+NEXT_PUBLIC_SUPABASE_URL="https://lyunstahvtccahmuydob.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dW5zdGFodnRjY2FobXV5ZG9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyOTc3OTIsImV4cCI6MjA4Mjg3Mzc5Mn0.gzOXEHHPimnl8svoZs4Lucj9wBknxccHPB__SjqHA7Q"
 
-# OpenRouter AI API Key
-OPENROUTER_API_KEY="[YOUR_OPENROUTER_KEY]"
+# Optional: Direct Postgres connection (if needed for migrations)
+# DATABASE_URL="postgres://postgres:Makanenak123!@db.lyunstahvtccahmuydob.supabase.co:5432/postgres"
+
+# OpenRouter AI API Key (for AI Concierge)
+# OPENROUTER_API_KEY="your_openrouter_key_here"
+

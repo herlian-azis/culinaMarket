@@ -1,24 +1,90 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { useState, useEffect, Suspense, useCallback } from 'react';
 import Link from 'next/link';
-import { Search, ShoppingBag, User, LogOut, Package } from 'lucide-react';
+import { Search, ShoppingBag, User, LogOut, Package, X } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import CartDrawer from './CartDrawer';
 
-export default function Navbar() {
+function NavbarContent() {
   const { totalItems, items, setIsOpen } = useCart();
   const { user, signOut, loading } = useAuth();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  // Initialize search query from URL if we are on /shop
+  const initialQuery = pathname === '/shop' ? searchParams.get('q') || '' : '';
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  // Sync state with URL if URL changes (e.g. back button)
+  useEffect(() => {
+    if (pathname === '/shop') {
+      const q = searchParams.get('q');
+      if (q !== null) {
+        setSearchQuery(q);
+      } else {
+        setSearchQuery('');
+      }
+    } else {
+      setSearchQuery('');
+    }
+  }, [pathname, searchParams]);
+
+
+  const updateSearchInfo = useCallback((term: string) => {
+    // Logic: 
+    // - If on /shop, update 'q' param (or delete if empty), keep other params.
+    // - If NOT on /shop, if term is not empty, go to /shop?q=term.
+    // - If NOT on /shop, and term is empty, do nothing or go to /shop?
+
+    if (pathname === '/shop') {
+      const params = new URLSearchParams(searchParams.toString());
+      if (term.trim()) {
+        params.set('q', term);
+      } else {
+        params.delete('q');
+      }
+      router.push(`/shop?${params.toString()}`);
+    } else {
+      if (term.trim()) {
+        router.push(`/shop?q=${encodeURIComponent(term)}`);
+      } else {
+        // Check if we should redirect to shop without query? 
+        // Usually user expects to just clear input.
+        // If they hit enter on empty input on Home, maybe go to Shop?
+        router.push('/shop');
+      }
+    }
+  }, [pathname, searchParams, router]);
+
+  // Instant Search Effect (Debounced)
+  useEffect(() => {
+    // Only auto-search if we are ON the shop page
+    if (pathname === '/shop') {
+      const timeoutId = setTimeout(() => {
+        const currentQ = searchParams.get('q') || '';
+        // Only push if value is different to avoid history clutter/loops
+        if (searchQuery !== currentQ) {
+          updateSearchInfo(searchQuery);
+        }
+      }, 500); // 500ms debounce
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [searchQuery, pathname, searchParams, updateSearchInfo]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchQuery.trim()) return;
-    router.push(`/shop?q=${encodeURIComponent(searchQuery)}`);
+    updateSearchInfo(searchQuery);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    updateSearchInfo('');
   };
 
   const handleSignOut = async () => {
@@ -65,12 +131,22 @@ export default function Navbar() {
                   placeholder="Search..."
                   className="w-full bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none py-2"
                 />
-                <button
-                  type="submit"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-culina-green transition-colors"
-                >
-                  <Search className="w-4 h-4" />
-                </button>
+                {searchQuery ? (
+                  <button
+                    type="button"
+                    onClick={clearSearch}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-culina-green transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-culina-green transition-colors"
+                  >
+                    <Search className="w-4 h-4" />
+                  </button>
+                )}
               </form>
             </div>
 
@@ -137,5 +213,13 @@ export default function Navbar() {
       </nav>
       <CartDrawer />
     </>
+  );
+}
+
+export default function Navbar() {
+  return (
+    <Suspense fallback={<div className="h-16 bg-white/80 border-b border-gray-100" />}>
+      <NavbarContent />
+    </Suspense>
   );
 }

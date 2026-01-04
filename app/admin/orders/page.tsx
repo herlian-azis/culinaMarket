@@ -142,7 +142,7 @@ export default function AdminOrdersPage() {
 
             {/* Filters */}
             <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1 max-w-md">
+                <div className="flex-1">
                     <Input
                         placeholder="Search by Order ID..."
                         value={search}
@@ -150,14 +150,14 @@ export default function AdminOrdersPage() {
                         leftIcon={<Search className="w-5 h-5" />}
                     />
                 </div>
-                <div className="relative">
+                <div className="relative w-full sm:w-44">
                     <select
                         value={statusFilter}
                         onChange={(e) => {
                             setStatusFilter(e.target.value);
                             setCurrentPage(1);
                         }}
-                        className="appearance-none pl-4 pr-10 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:outline-none"
+                        className="w-full appearance-none pl-4 pr-10 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:outline-none text-sm"
                     >
                         <option value="">All Status</option>
                         {statusOptions.map(status => (

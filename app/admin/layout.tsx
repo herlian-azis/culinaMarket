@@ -9,6 +9,7 @@ import {
     ShoppingCart,
     Package,
     Users,
+    ChefHat,
     Menu,
     X,
     LogOut,
@@ -19,6 +20,7 @@ const navItems = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
     { href: '/admin/products', label: 'Products', icon: Package },
+    { href: '/admin/recipes', label: 'Recipes', icon: ChefHat },
     { href: '/admin/users', label: 'Users', icon: Users },
 ];
 

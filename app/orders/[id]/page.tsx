@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft, Package, MapPin, Clock, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Package, MapPin, Clock, CheckCircle, CircleX, Truck, ClipboardClock } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -98,22 +98,33 @@ export default function OrderDetailPage() {
         switch (status) {
             case 'Delivered':
                 return <CheckCircle className="w-5 h-5 text-culina-green" />;
-            default:
+            case 'Processing':
                 return <Clock className="w-5 h-5 text-blue-500" />;
+            case 'Shipped':
+                return <Truck className="w-5 h-5 text-indigo-500" />;
+            case 'Cancelled':
+                return <CircleX className="w-5 h-5 text-red-500" />;
+            case 'Pending':
+                return <ClipboardClock className="w-5 h-5 text-yellow-500" />;
+            default:
+                return <Package className="w-5 h-5 text-gray-400" />;
         }
     };
 
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'Delivered':
-                return 'bg-culina-green/10 text-culina-green';
+                return 'bg-green-100 text-green-800';
             case 'Processing':
-            case 'Shipped':
                 return 'bg-blue-100 text-blue-800';
+            case 'Shipped':
+                return 'bg-indigo-100 text-indigo-800';
             case 'Cancelled':
                 return 'bg-red-100 text-red-800';
-            default:
+            case 'Pending':
                 return 'bg-yellow-100 text-yellow-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
         }
     };
 
