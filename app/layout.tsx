@@ -19,6 +19,7 @@ export const metadata: Metadata = {
 
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
+import { ToastProvider } from "@/context/ToastContext";
 import CartNotification from "@/components/CartNotification";
 import ConditionalFooter from "@/components/ConditionalFooter";
 
@@ -33,11 +34,13 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
-          <CartProvider>
-            {children}
-            <ConditionalFooter />
-            <CartNotification />
-          </CartProvider>
+          <ToastProvider>
+            <CartProvider>
+              {children}
+              <ConditionalFooter />
+              <CartNotification />
+            </CartProvider>
+          </ToastProvider>
         </AuthProvider>
       </body>
     </html>

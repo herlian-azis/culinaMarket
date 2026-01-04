@@ -1,7 +1,7 @@
 import * as React from "react"
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
-    variant?: 'default' | 'secondary' | 'outline' | 'success' | 'warning' | 'error'
+    variant?: 'default' | 'secondary' | 'outline' | 'success' | 'warning' | 'error' | 'brand'
 }
 
 const Badge = ({ className = "", variant = "default", ...props }: BadgeProps) => {
@@ -12,6 +12,7 @@ const Badge = ({ className = "", variant = "default", ...props }: BadgeProps) =>
         success: "border-transparent bg-green-100 text-green-800",
         warning: "border-transparent bg-yellow-100 text-yellow-800",
         error: "border-transparent bg-red-100 text-red-800",
+        brand: "border-transparent bg-emerald-100 text-emerald-800",
     }
 
     return (

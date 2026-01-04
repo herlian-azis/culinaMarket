@@ -36,7 +36,7 @@ type OrderShipping = {
 };
 
 export default function OrderDetailPage() {
-    const { user, loading: authLoading } = useAuth();
+    const { user, session, loading: authLoading } = useAuth();
     const router = useRouter();
     const params = useParams();
     const orderId = params.id as string;
@@ -52,46 +52,38 @@ export default function OrderDetailPage() {
             return;
         }
 
-        if (user && orderId) {
+        if (user && session && orderId) {
             fetchOrderDetails();
         }
-    }, [user, authLoading, orderId, router]);
+    }, [user, session, authLoading, orderId, router]);
 
     const fetchOrderDetails = async () => {
-        // Fetch order
-        const { data: orderData } = await supabase
-            .from('orders')
-            .select('*')
-            .eq('id', orderId)
-            .eq('user_id', user?.id)
-            .single();
+        try {
+            if (!session?.access_token) return;
 
-        if (orderData) {
-            setOrder(orderData);
+            const res = await fetch(`/api/orders/${orderId}`, {
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`
+                }
+            });
 
-            // Fetch order items with product info
-            const { data: itemsData } = await supabase
-                .from('order_items')
-                .select('*, products(id, name, image_url)')
-                .eq('order_id', orderId);
-
-            if (itemsData) {
-                setItems(itemsData as OrderItem[]);
+            if (!res.ok) {
+                if (res.status === 404) {
+                    setOrder(null); // Will trigger "Order not found" UI
+                }
+                throw new Error('Failed to fetch order');
             }
 
-            // Fetch shipping info
-            const { data: shippingData } = await supabase
-                .from('order_shipping')
-                .select('*')
-                .eq('order_id', orderId)
-                .single();
+            const data = await res.json();
 
-            if (shippingData) {
-                setShipping(shippingData);
-            }
+            setOrder(data.order);
+            setItems(data.items || []);
+            setShipping(data.shipping);
+        } catch (error) {
+            console.error('Error fetching order details:', error);
+        } finally {
+            setLoading(false);
         }
-
-        setLoading(false);
     };
 
     const getStatusIcon = (status: string) => {
@@ -155,6 +147,42 @@ export default function OrderDetailPage() {
         );
     }
 
+    const steps = [
+        {
+            id: 'Pending',
+            label: 'Order Placed',
+            date: order.created_at,
+            icon: ClipboardClock,
+            activeClass: 'bg-yellow-500 border-yellow-500 text-white',
+            textClass: 'text-yellow-700',
+            ringClass: 'ring-yellow-500/20'
+        },
+        {
+            id: 'Processing',
+            label: 'Processing',
+            icon: Clock,
+            activeClass: 'bg-blue-500 border-blue-500 text-white',
+            textClass: 'text-blue-700',
+            ringClass: 'ring-blue-500/20'
+        },
+        {
+            id: 'Shipped',
+            label: 'Shipped',
+            icon: Truck,
+            activeClass: 'bg-indigo-500 border-indigo-500 text-white',
+            textClass: 'text-indigo-700',
+            ringClass: 'ring-indigo-500/20'
+        },
+        {
+            id: 'Delivered',
+            label: 'Delivered',
+            icon: CheckCircle,
+            activeClass: 'bg-emerald-500 border-emerald-500 text-white',
+            textClass: 'text-emerald-700',
+            ringClass: 'ring-emerald-500/20'
+        },
+    ];
+
     return (
         <div className="min-h-screen bg-gray-50">
             <Navbar />
@@ -168,7 +196,7 @@ export default function OrderDetailPage() {
 
                 {/* Order Header */}
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-between mb-8">
                         <div>
                             <h1 className="text-xl font-bold text-gray-900">
                                 Order #{order.id.slice(0, 8).toUpperCase()}
@@ -188,6 +216,77 @@ export default function OrderDetailPage() {
                             {order.status}
                         </span>
                     </div>
+
+                    {/* Timeline */}
+                    {order.status !== 'Cancelled' ? (
+                        <div className="relative py-8 px-4 sm:px-12">
+                            {/* Desktop Progress Bar Background */}
+                            <div className="absolute top-12 left-0 w-full h-0.5 bg-gray-100 hidden sm:block"></div>
+
+                            {/* Active Progress Bar - Solid Color */}
+                            <div
+                                className="absolute top-12 left-0 h-0.5 bg-culina-green transition-all duration-700 ease-in-out hidden sm:block"
+                                style={{
+                                    width: `${Math.max(0, (['Pending', 'Processing', 'Shipped', 'Delivered'].indexOf(order.status) / 3) * 100)}%`
+                                }}
+                            ></div>
+
+                            <div className="flex flex-col sm:flex-row justify-between relative z-10 gap-10 sm:gap-0">
+                                {steps.map((step, index) => {
+                                    const statusOrder = ['Pending', 'Processing', 'Shipped', 'Delivered'];
+                                    const currentIndex = statusOrder.indexOf(order.status);
+                                    const stepIndex = statusOrder.indexOf(step.id);
+                                    const isCompleted = stepIndex <= currentIndex;
+                                    const isCurrent = stepIndex === currentIndex;
+
+                                    return (
+                                        <div key={step.id} className="flex sm:flex-col items-center gap-6 sm:gap-0 group min-w-[100px]">
+                                            {/* Icon Circle */}
+                                            <div
+                                                className={`
+                                                    w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 relative z-10
+                                                    ${isCompleted
+                                                        ? step.activeClass
+                                                        : 'bg-white border-gray-200 text-gray-300'
+                                                    }
+                                                    ${isCurrent ? `ring-4 ${step.ringClass} ring-offset-2` : ''}
+                                                `}
+                                            >
+                                                <step.icon className="w-4 h-4" strokeWidth={2.5} />
+
+                                                {/* Mobile Vertical Line */}
+                                                {index < 3 && (
+                                                    <div className={`absolute top-8 left-1/2 -translate-x-1/2 w-0.5 h-16 sm:hidden ${stepIndex < currentIndex ? 'bg-culina-green' : 'bg-gray-100'}`}></div>
+                                                )}
+                                            </div>
+
+                                            {/* Text Content */}
+                                            <div className="sm:text-center sm:mt-4 flex-1 sm:flex-none pt-1 sm:pt-0">
+                                                <p className={`text-sm font-semibold transition-colors ${isCompleted ? step.textClass : 'text-gray-400'}`}>
+                                                    {step.label}
+                                                </p>
+                                                {isCurrent && (
+                                                    <p className={`text-xs font-medium mt-0.5 ${step.textClass}`}>
+                                                        Current Status
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="bg-gray-50 rounded-xl p-6 flex items-center gap-4 border border-gray-100">
+                            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-gray-400 shadow-sm border border-gray-100">
+                                <CircleX className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-gray-900">Order Cancelled</h3>
+                                <p className="text-sm text-gray-500">This order has been cancelled.</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -202,7 +301,7 @@ export default function OrderDetailPage() {
                             <div className="divide-y divide-gray-100">
                                 {items.map((item) => (
                                     <div key={item.id} className="flex items-center gap-4 py-4">
-                                        <div className="h-16 w-16 bg-gray-100 rounded-lg overflow-hidden relative flex-shrink-0">
+                                        <div className="h-16 w-16 bg-gray-100 rounded-lg overflow-hidden relative shrink-0">
                                             {item.products?.image_url ? (
                                                 <Image
                                                     src={item.products.image_url}

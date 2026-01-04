@@ -9,7 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import CartDrawer from './CartDrawer';
 
 function NavbarContent() {
-  const { totalItems, items, setIsOpen } = useCart();
+  const { items, setIsOpen } = useCart();
   const { user, signOut, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -181,6 +181,14 @@ function NavbarContent() {
                       <div className="px-4 py-2 border-b border-gray-100">
                         <p className="text-sm font-medium text-gray-900 truncate">{user.email}</p>
                       </div>
+                      <Link
+                        href="/profile"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        <User className="w-4 h-4" />
+                        Profile
+                      </Link>
                       <Link
                         href="/orders"
                         onClick={() => setUserMenuOpen(false)}

@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { CreditCard, Truck, ShieldCheck, ShoppingBag } from 'lucide-react';
+import { CreditCard, Truck, ShieldCheck, ShoppingBag, MapPin } from 'lucide-react';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 
@@ -24,6 +24,43 @@ export default function CheckoutPage() {
         postalCode: ''
     });
 
+    // Saved addresses state
+    const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+    const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+
+    // Fetch saved addresses
+    useEffect(() => {
+        if (user) {
+            const fetchAddresses = async () => {
+                const { data } = await supabase
+                    .from('addresses')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .order('is_default', { ascending: false });
+
+                if (data && data.length > 0) {
+                    setSavedAddresses(data);
+                    // Standard auto-select default behavior if desired:
+                    const defaultAddr = data.find((a: any) => a.is_default);
+                    if (defaultAddr) selectAddress(defaultAddr);
+                }
+            };
+            fetchAddresses();
+        }
+    }, [user]);
+
+    const selectAddress = (addr: any) => {
+        setSelectedAddressId(addr.id);
+        setShipping(prev => ({
+            ...prev,
+            name: addr.recipient_name || '',
+            address: addr.address_line || '',
+            city: addr.city || '',
+            postalCode: addr.postal_code || '',
+            // Don't overwrite email as it's from auth usually
+        }));
+    };
+
     // Payment form state
     const [payment, setPayment] = useState({
         cardNumber: '',
@@ -40,6 +77,7 @@ export default function CheckoutPage() {
             setShipping(prev => ({ ...prev, email: user.email || '' }));
         }
     }, [user]);
+
 
     // Validate shipping form
     const validateForm = () => {
@@ -197,6 +235,37 @@ export default function CheckoutPage() {
                     {/* Left Column: Forms */}
                     <div className="lg:col-span-7">
                         <form onSubmit={handleCheckout} className="space-y-8">
+
+                            {savedAddresses.length > 0 && (
+                                <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="h-10 w-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
+                                            <MapPin className="w-5 h-5" />
+                                        </div>
+                                        <h2 className="text-lg font-bold text-gray-900">Saved Addresses</h2>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {savedAddresses.map((addr) => (
+                                            <div
+                                                key={addr.id}
+                                                onClick={() => selectAddress(addr)}
+                                                className={`cursor-pointer border rounded-xl p-4 transition-all relative ${selectedAddressId === addr.id
+                                                        ? 'border-culina-green bg-emerald-50 ring-1 ring-culina-green'
+                                                        : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
+                                                    }`}
+                                            >
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <span className="font-semibold text-gray-900">{addr.label}</span>
+                                                    {addr.is_default && <span className="text-xs text-emerald-600 font-medium">Default</span>}
+                                                </div>
+                                                <p className="text-sm font-medium text-gray-900">{addr.recipient_name}</p>
+                                                <p className="text-sm text-gray-500 mt-1">{addr.address_line}, {addr.city} {addr.postal_code}</p>
+                                                <p className="text-sm text-gray-500">{addr.phone_number}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+                            )}
 
                             <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
                                 <div className="flex items-center gap-3 mb-6">
