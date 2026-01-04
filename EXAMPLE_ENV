@@ -1,12 +1,23 @@
-# Copy this file to .env.local
+# ===========================================
+# CulinaMarket - Environment Variables
+# ===========================================
+# Copy this file to .env.local before running the app
+# cp EXAMPLE_ENV .env.local
 
-# Supabase REST API (used by @supabase/supabase-js client)
+# ===========================================
+# REQUIRED: Supabase Configuration
+# ===========================================
 NEXT_PUBLIC_SUPABASE_URL="https://lyunstahvtccahmuydob.supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dW5zdGFodnRjY2FobXV5ZG9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyOTc3OTIsImV4cCI6MjA4Mjg3Mzc5Mn0.gzOXEHHPimnl8svoZs4Lucj9wBknxccHPB__SjqHA7Q"
 
-# Optional: Direct Postgres connection (if needed for migrations)
-# DATABASE_URL="postgres://postgres:Makanenak123!@db.lyunstahvtccahmuydob.supabase.co:5432/postgres"
+# ===========================================
+# REQUIRED: AI Concierge (OpenRouter)
+# ===========================================
+# Get your API key from: https://openrouter.ai/keys
+OPENROUTER_API_KEY="sk-or-v1-your_key_here"
 
-# OpenRouter AI API Key (for AI Concierge)
-# OPENROUTER_API_KEY="your_openrouter_key_here"
-
+# ===========================================
+# OPTIONAL: Direct Database Connection
+# ===========================================
+# Only needed for database migrations, not for the app
+# DATABASE_URL="postgres://user:password@host:5432/database"
