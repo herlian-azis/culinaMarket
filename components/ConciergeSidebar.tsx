@@ -189,7 +189,7 @@ export default function ConciergeSidebar() {
                                     type="text"
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
-                                    placeholder="Examples: 'Pasta', 'Vegan salad', 'Steak'"
+                                    placeholder="Examples: 'Pasta', 'Fruits', 'Chicken'"
                                     className="w-full rounded-full border border-gray-200 bg-gray-50 pl-4 pr-12 py-3 text-sm text-gray-900 focus:border-culina-green focus:ring-2 focus:ring-culina-green/20 focus:outline-none transition-all placeholder:text-gray-400"
                                 />
                                 <button

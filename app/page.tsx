@@ -88,10 +88,10 @@ export default async function Home() {
               </div>
               <h1 className="mt-10 text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
                 Fresh ingredients,<br />
-                <span className="text-culina-green">Powered by AI.</span>
+                <span className="text-culina-green">Zero Guesswork.</span>
               </h1>
               <p className="mt-6 text-lg leading-8 text-gray-600">
-                Stop wondering what to cook. Our AI Concierge suggests delicious recipes based on what's fresh and what you already have.
+                Stop wondering what to cook. Our AI Concierge instantly suggests delicious recipes based on your taste and available fresh ingredients.
               </p>
               <div className="mt-10 flex items-center gap-x-6">
                 <Link

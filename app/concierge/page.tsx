@@ -18,7 +18,7 @@ import Image from 'next/image';
 export default function ConciergePage() {
     const { addItem } = useCart();
     const [messages, setMessages] = useState<Message[]>([
-        { role: 'ai', text: 'Welcome to the Concierge! I can help you find recipes or products. Try asking for "pasta" or "steak".' }
+        { role: 'ai', text: 'Welcome to the Concierge! I can help you find recipes or products. Try asking for "pasta" or "chicken".' }
     ]);
     const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);

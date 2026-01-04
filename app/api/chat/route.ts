@@ -15,14 +15,39 @@ export async function POST(req: Request) {
         const query = (message || "").toLowerCase();
 
         // 0. Query Translation / Keyword Extraction
-        let searchTerms = [query];
+        // Fallback Indonesian-English dictionary for common food terms
+        const foodDictionary: { [key: string]: string[] } = {
+            'ayam': ['chicken', 'ayam'],
+            'daging': ['beef', 'meat', 'daging'],
+            'ikan': ['fish', 'salmon', 'ikan'],
+            'telur': ['egg', 'eggs', 'telur'],
+            'nasi': ['rice', 'nasi'],
+            'pasta': ['pasta', 'spaghetti'],
+            'sayur': ['vegetable', 'spinach', 'sayur'],
+            'buah': ['fruit', 'banana', 'buah'],
+            'salmon': ['salmon'],
+            'pisang': ['banana', 'pisang'],
+            'alpukat': ['avocado', 'alpukat'],
+            'bawang': ['garlic', 'onion', 'bawang'],
+            'tomat': ['tomato', 'tomat'],
+        };
 
-        if (process.env.OPENROUTER_API_KEY) {
+        // Check dictionary first for instant translation
+        let searchTerms: string[] = [];
+        const queryWords = query.split(/\s+/);
+        for (const word of queryWords) {
+            if (foodDictionary[word]) {
+                searchTerms.push(...foodDictionary[word]);
+            }
+        }
+
+        // If no dictionary match, try AI translation
+        if (searchTerms.length === 0 && process.env.OPENROUTER_API_KEY) {
             try {
                 const translationCompletion = await openai.chat.completions.create({
                     model: "xiaomi/mimo-v2-flash:free",
                     messages: [
-                        { role: "system", content: "You are a grocery search assistant. Translate the user query into English keywords for a database search. Return ONLY a JSON array of strings. Example: query='daging', output=['beef', 'meat', 'steak']. Example: query='apel', output=['apple']." },
+                        { role: "system", content: "You are a grocery/food translator. Extract food-related keywords from the user query and translate them to English. Return JSON: {\"keywords\": [\"english_word1\", \"english_word2\"]}. Example: 'resep ayam goreng' -> {\"keywords\": [\"chicken\", \"fried\", \"recipe\"]}. Example: 'makan malam sehat' -> {\"keywords\": [\"dinner\", \"healthy\", \"meal\"]}." },
                         { role: "user", content: message }
                     ],
                     response_format: { type: "json_object" }
@@ -30,19 +55,21 @@ export async function POST(req: Request) {
 
                 const translationText = translationCompletion.choices[0].message.content || "{}";
                 const translationJson = JSON.parse(translationText);
-
-                // Assuming output structure like { "keywords": ["..."] } or just the array if the model is smart
-                // Let's force a structure in the prompt or handle loose JSON better.
-                // Re-prompting stricter:
-                // Actually, let's just search.
                 const keywords = translationJson.keywords || translationJson.items || [];
                 if (Array.isArray(keywords) && keywords.length > 0) {
-                    searchTerms = keywords;
+                    searchTerms = keywords.map((k: string) => k.toLowerCase());
                 }
             } catch (e) {
                 console.error("Translation failed, falling back to original query", e);
             }
         }
+
+        // Always include original query as fallback
+        if (searchTerms.length === 0) {
+            searchTerms = [query];
+        }
+
+        console.log("Search terms:", searchTerms);
 
         // 1. Context Retrieval (RAG) using translated terms
         // We'll search for the first term or join them. Ideally OR query.
@@ -51,31 +78,143 @@ export async function POST(req: Request) {
 
         const searchTerm = searchTerms[0] || query; // fallback
 
-        // Search Recipes
-        const { data: recipes } = await supabase
-            .from('recipes')
-            .select(`
-                id,
-                title,
-                prep_time_minutes,
-                recipe_ingredients (
-                    products (
-                        id,
-                        name,
-                        price,
-                        image_url
-                    )
-                )
-            `)
-            .ilike('title', `%${searchTerm}%`)
-            .limit(2);
+        // Helper to construct OR query for Supabase
+        const buildOrQuery = (columns: string[], terms: string[]) => {
+            return terms.flatMap(term => columns.map(col => `${col}.ilike.%${term}%`)).join(',');
+        };
 
-        // Search Products
-        const { data: products } = await supabase
+        // Detect if user is asking specifically about RECIPES
+        const recipeKeywords = ['resep', 'recipe', 'masak', 'cook', 'bikin', 'buat makanan', 'menu', 'hidangan'];
+        const isRecipeQuery = recipeKeywords.some(keyword => query.includes(keyword));
+
+        // Detect if user is asking for general suggestions (like "saran resep", "recommend dinner")
+        const generalSuggestionKeywords = ['saran', 'suggest', 'recommend', 'ide', 'idea', 'apa yang', 'what should'];
+        const isGeneralSuggestion = generalSuggestionKeywords.some(keyword => query.includes(keyword));
+
+        // Combined: Is this a recipe-related request?
+        const isRecipeRequest = isRecipeQuery || (isGeneralSuggestion && isRecipeQuery);
+
+        // Is this a product-only query? (asking "ada ayam?" without "resep")
+        const isProductQuery = !isRecipeQuery;
+
+        console.log("Query analysis:", { isRecipeQuery, isProductQuery, isGeneralSuggestion });
+
+        const termsToSearch = searchTerms.length > 0 ? searchTerms : [query];
+
+        // 1. Search Recipes by Title or Description (or get all for general requests)
+        let recipesByTitle: any[] | null = null;
+
+        if (isRecipeQuery) {
+            // For general requests, fetch all available recipes
+            // First try a simple query to check connectivity
+            console.log("Fetching all recipes (general request) with searchTerms:", searchTerms);
+
+            const { data: simpleData, error: simpleError } = await supabase
+                .from('recipes')
+                .select('id, title, prep_time_minutes')
+                .limit(10);
+
+            console.log("Simple recipe fetch count:", simpleData?.length || 0);
+            if (simpleError) console.error("Simple recipe error:", simpleError);
+
+            // Now fetch with full relations
+            const { data, error } = await supabase
+                .from('recipes')
+                .select(`
+                    id,
+                    title,
+                    prep_time_minutes,
+                    recipe_ingredients (
+                        products!recipe_ingredients_product_id_fkey (
+                            id,
+                            name,
+                            price,
+                            image_url
+                        )
+                    )
+                `)
+                .limit(10);
+
+            console.log("Full recipe request - data count:", data?.length || 0);
+            if (error) console.error("General recipe request - error:", error);
+            recipesByTitle = data;
+        } else {
+            // For specific queries, search by title/description
+            const orQuery = buildOrQuery(['title', 'description'], termsToSearch);
+            console.log("Specific query OR condition:", orQuery);
+
+            const { data, error } = await supabase
+                .from('recipes')
+                .select(`
+                    id,
+                    title,
+                    prep_time_minutes,
+                    recipe_ingredients (
+                        products!recipe_ingredients_product_id_fkey (
+                            id,
+                            name,
+                            price,
+                            image_url
+                        )
+                    )
+                `)
+                .or(orQuery)
+                .limit(5);
+
+            console.log("Specific recipe search - data:", JSON.stringify(data, null, 2));
+            if (error) console.error("Specific recipe search - error:", error);
+            recipesByTitle = data;
+        }
+
+        // 2. Search Products by Name or Category
+        const { data: productsByName } = await supabase
             .from('products')
             .select('id, name, price, stock_quantity, image_url')
-            .ilike('name', `%${searchTerm}%`)
-            .limit(5);
+            .or(buildOrQuery(['name', 'category'], termsToSearch))
+            .limit(10);
+
+        // 3. Search Recipes by Ingredient (if we found matching products)
+        let recipesByIngredient: any[] = [];
+        if (productsByName && productsByName.length > 0) {
+            const productIds = productsByName.map(p => p.id);
+            // Find recipe_ingredients that contain these products
+            const { data: relatedRecipeIngredients } = await supabase
+                .from('recipe_ingredients')
+                .select('recipe_id')
+                .in('product_id', productIds)
+                .limit(20);
+
+            if (relatedRecipeIngredients && relatedRecipeIngredients.length > 0) {
+                const recipeIds = Array.from(new Set(relatedRecipeIngredients.map(r => r.recipe_id)));
+                const { data: fetchedRecipes } = await supabase
+                    .from('recipes')
+                    .select(`
+                        id,
+                        title,
+                        prep_time_minutes,
+                        recipe_ingredients (
+                            products!recipe_ingredients_product_id_fkey (
+                                id,
+                                name,
+                                price,
+                                image_url
+                            )
+                        )
+                    `)
+                    .in('id', recipeIds)
+                    .limit(5);
+
+                if (fetchedRecipes) recipesByIngredient = fetchedRecipes;
+            }
+        }
+
+        // Merge and Deduplicate Recipes
+        const allRecipes = [...(recipesByTitle || []), ...recipesByIngredient];
+        const uniqueRecipesMap = new Map();
+        allRecipes.forEach(r => uniqueRecipesMap.set(r.id, r));
+        const recipes = Array.from(uniqueRecipesMap.values());
+
+        const products = productsByName || [];
 
         // 2. OpenRouter Integration
         if (process.env.OPENROUTER_API_KEY) {
@@ -88,37 +227,78 @@ export async function POST(req: Request) {
                 ? history.map((m: any) => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.text }))
                 : [];
 
+            // Format recipes for clearer AI understanding WITH FULL ingredient details
+            const formattedRecipes = recipes.map(r => ({
+                id: r.id,
+                title: r.title,
+                prep_time_minutes: r.prep_time_minutes,
+                ingredients: r.recipe_ingredients?.map((ri: any) => ri.products).filter(Boolean) || []
+            }));
+
+            // Create a clear list of all ingredients per recipe for the AI
+            const recipeListWithIngredients = formattedRecipes.map(r => {
+                const ingredientsList = r.ingredients.map((i: any) =>
+                    `  * ${i.name} - Rp ${i.price} (ID: ${i.id})`
+                ).join('\n');
+                return `RECIPE: "${r.title}" (${r.prep_time_minutes} mins)\nINGREDIENTS:\n${ingredientsList || '  (no ingredients linked)'}`;
+            }).join('\n\n');
+
+            // Determine query type for the AI
+            const queryType = isRecipeQuery ? 'RECIPE' : 'PRODUCT';
+
             const systemPrompt = `
             You are the AI Concierge for CulinaMarket, a premium grocery store.
-            Your goal is to help users find recipes and products from our inventory.
             
-            Context found in database for current query:
+            ===== QUERY TYPE DETECTED: ${queryType} =====
+            ${isRecipeQuery
+                    ? 'The user is asking about RECIPES. Recommend recipes with ALL their ingredients.'
+                    : 'The user is asking about PRODUCTS/INGREDIENTS. List available products that match their query.'}
+            
+            ===== DATABASE RECIPES WITH ALL INGREDIENTS =====
+            ${recipeListWithIngredients || 'No recipes found.'}
+            
+            ===== AVAILABLE PRODUCTS =====
+            ${products.length > 0 ? products.map(p => `- ${p.name} (Rp ${p.price}, ID: ${p.id}, image: ${p.image_url})`).join('\n') : 'No products found.'}
+            
+            ===== CRITICAL INSTRUCTIONS =====
+            ${isRecipeQuery ? `
+            1. **RECIPE MODE**: The user asked about recipes. Recommend a RECIPE and include ALL its ingredients.
+            2. **ALL INGREDIENTS**: Include EVERY ingredient in action.items. Do NOT skip any!
+            3. Use the exact id, name, price, image_url from the context.
+            ` : `
+            1. **PRODUCT MODE**: The user asked about products/ingredients (e.g., "ada ayam?", "apakah ada telur?").
+            2. **SHOW PRODUCTS**: List the matching products from AVAILABLE PRODUCTS section.
+            3. Do NOT recommend recipes unless the user explicitly asks for recipes.
+            4. Include matching products in action.items.
+            `}
+            4. **LANGUAGE**: Answer in the user's language (Indonesian/English).
+            5. **NO INVENTION**: Never make up products or IDs not in the database.
+            
+            ===== RAW CONTEXT DATA (USE THESE EXACT VALUES) =====
             ${JSON.stringify(context, null, 2)}
             
-            Instructions:
-            1. Analyze the Context and User Query.
-            2. **ABSOLUTE RULE**: You are an interface for the provided database. You generally CANNOT recommend things that are not in the "Context" JSON below.
-            3. **DATA VALIDATION**: 
-               - If the "Context" lists recipes or products, you may recommend them. 
-               - The 'action.items' array must ONLY contain items with matching 'id', 'name', 'price' and 'image_url' from the Context. DO NOT MAKE UP IDS.
-            4. **MISSING DATA**: 
-               - If the Context is empty (foundRecipes: [], foundProducts: []), you **MUST NOT** pretend to have the item.
-               - Instead, politely say: "I apologize, but we don't have [item] in stock right now."
-            5. Your tone should be helpful, premium, and concise.
-            6. **LANGUAGE**: Answer in the same language as the User's Query. If they ask in Indonesian, answer in Indonesian.
-            
-            IMPORTANT: You must return a strict JSON object. No markdown formatting.
-            Structure:
+            ===== RESPONSE FORMAT (JSON ONLY) =====
+            ${isRecipeQuery ? `
+            For RECIPE queries, include ALL ingredients:
             {
-                "text": "Response message.",
+                "text": "Saya rekomendasikan resep [Recipe Name]! [brief description]. Berikut semua bahan yang Anda butuhkan:",
+                "action": {
+                    "type": "add_to_cart",
+                    "items": [ALL ingredients from the recipe]
+                }
+            }
+            ` : `
+            For PRODUCT queries, list matching products:
+            {
+                "text": "Ya, kami punya [product name]! [brief description about the product].",
                 "action": {
                     "type": "add_to_cart",
                     "items": [
-                        { "id": "must_match_context_id", "name": "must_match_context_name", "price": 123, "image_url": "must_match_context_image_url" }
+                        { "id": "product_id", "name": "product_name", "price": 45000, "image_url": "url" }
                     ]
                 }
             }
-            Only include "action" if you are recommending specific items explicitly found in the Context.
+            `}
             `;
 
             try {
