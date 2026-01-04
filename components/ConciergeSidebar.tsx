@@ -83,7 +83,7 @@ export default function ConciergeSidebar() {
             {!isOpen && (
                 <button
                     onClick={toggleSidebar}
-                    className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-culina-navy text-white shadow-xl hover:bg-blue-900 hover:scale-105 transition-all"
+                    className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-culina-navy text-white shadow-xl hover:bg-blue-900 hover:scale-105 transition-all"
                 >
                     <Sparkles className="w-8 h-8" />
                 </button>
@@ -96,9 +96,9 @@ export default function ConciergeSidebar() {
                     <div className="absolute inset-0 bg-black/20 backdrop-blur-sm transition-opacity" onClick={toggleSidebar}></div>
 
                     {/* Sidebar Panel */}
-                    <div className="relative w-full max-w-md h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+                    <div className="relative w-full sm:max-w-md h-dvh bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
                         {/* Header */}
-                        <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-culina-off-white">
+                        <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-culina-off-white pt-[max(1rem,env(safe-area-inset-top))]">
                             <div className="flex items-center gap-2">
                                 <div className="h-8 w-8 rounded-full bg-culina-green/10 flex items-center justify-center text-culina-green">
                                     <Sparkles className="w-5 h-5" />
@@ -133,7 +133,7 @@ export default function ConciergeSidebar() {
                                                 {msg.action.items.map((item, i) => (
                                                     <li key={i} className="flex items-center gap-3 text-sm">
                                                         {item.image_url && (
-                                                            <div className="relative w-8 h-8 flex-shrink-0 rounded-md overflow-hidden bg-gray-100">
+                                                            <div className="relative w-8 h-8 shrink-0 rounded-md overflow-hidden bg-gray-100">
                                                                 <Image
                                                                     src={item.image_url}
                                                                     alt={item.name}
@@ -183,7 +183,7 @@ export default function ConciergeSidebar() {
                         </div>
 
                         {/* Input Area */}
-                        <div className="p-4 bg-white border-t border-gray-100">
+                        <div className="p-4 bg-white border-t border-gray-100 pb-[max(1rem,env(safe-area-inset-bottom))]">
                             <form onSubmit={handleSend} className="relative">
                                 <input
                                     type="text"

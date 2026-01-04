@@ -298,7 +298,7 @@ export default function ShopGrid({ products: initialProducts }: ShopGridProps) {
             {/* Grid */}
             <motion.div
                 layout
-                className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-4 xl:gap-x-8"
+                className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10 xl:gap-x-8"
             >
                 <AnimatePresence mode="popLayout">
                     {filteredProducts.length > 0 ? (

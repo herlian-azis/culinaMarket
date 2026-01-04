@@ -13,7 +13,7 @@ async function getProducts() {
     .from('products')
     .select('id, name, price, stock_quantity, image_url, category')
     .eq('is_deleted', false)
-    .limit(10);
+    .limit(4);
   if (error) return [];
   return data || [];
 }
@@ -25,7 +25,7 @@ async function getRecipes() {
       id, title, description, difficulty_level, prep_time_minutes, image_url,
       recipe_ingredients ( unit, quantity_required, products!recipe_ingredients_product_id_fkey ( id, name, price, image_url ) )
     `)
-    .limit(5);
+    .limit(3);
   if (error) return [];
   return data || [];
 }

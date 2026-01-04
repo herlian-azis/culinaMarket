@@ -99,12 +99,30 @@ function NavbarContent() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between">
           {/* Logo */}
           <div className="flex items-center">
+            {/* Mobile Menu Button - Left */}
+            <button
+              onClick={() => setUserMenuOpen(false)} // Close user menu if open
+              className="md:hidden mr-3 p-2 -ml-2 text-gray-500 hover:bg-gray-100 rounded-md"
+              type="button"
+              aria-label="Open menu"
+            >
+              <div className="space-y-1.5" onClick={() => {
+                const mobileMenu = document.getElementById('mobile-menu');
+                if (mobileMenu) {
+                  mobileMenu.classList.toggle('hidden');
+                }
+              }}>
+                <div className="w-6 h-0.5 bg-gray-600"></div>
+                <div className="w-6 h-0.5 bg-gray-600"></div>
+                <div className="w-6 h-0.5 bg-gray-600"></div>
+              </div>
+            </button>
             <Link href="/" className="text-xl font-bold tracking-tight text-culina-green">
               Culina<span className="text-culina-navy">Market</span>
             </Link>
           </div>
 
-          {/* Navigation Links */}
+          {/* Navigation Links - Desktop */}
           <div className="hidden md:flex items-center space-x-8">
             <Link href="/shop" className="text-sm font-medium text-gray-700 hover:text-culina-green transition-colors">
               Shop
@@ -118,8 +136,9 @@ function NavbarContent() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center space-x-4">
-            <div className="relative flex items-center w-64 transition-all duration-300 ease-in-out">
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            {/* Search - Responsive Width */}
+            <div className="hidden sm:flex relative items-center w-40 sm:w-64 transition-all duration-300 ease-in-out">
               <form
                 onSubmit={handleSearch}
                 className="flex items-center w-full rounded-full border border-gray-200 bg-gray-50 pl-4 pr-10 hover:shadow-sm focus-within:shadow-sm focus-within:border-culina-green/50 transition-all duration-300"
@@ -149,6 +168,7 @@ function NavbarContent() {
                 )}
               </form>
             </div>
+            {/* Mobile Search Icon Toggle could go here if search is hidden on very small screens */}
 
             <button
               onClick={() => setIsOpen(true)}
@@ -210,13 +230,32 @@ function NavbarContent() {
               ) : (
                 <Link
                   href="/login"
-                  className="px-4 py-2 text-sm font-medium text-white bg-culina-navy rounded-lg hover:bg-blue-900 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-white bg-culina-navy rounded-lg hover:bg-blue-900 transition-colors whitespace-nowrap"
                 >
                   Login
                 </Link>
               )
             )}
           </div>
+        </div>
+
+        {/* Mobile Menu Dropdown */}
+        <div id="mobile-menu" className="hidden md:hidden border-t border-gray-100 py-4 space-y-2 animate-in slide-in-from-top-2 duration-200">
+          {/* Mobile Search - Visible only on very small screens if top usage is hidden, but here we kept top usage for tablets. Let's add full search for mobile here */}
+          <form onSubmit={handleSearch} className="flex sm:hidden items-center px-1 mb-4">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search products..."
+              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-culina-green focus:outline-none"
+            />
+          </form>
+
+          <Link href="/" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-culina-green  transition-colors">Home</Link>
+          <Link href="/shop" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-culina-green  transition-colors">Shop</Link>
+          <Link href="/recipes" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-culina-green  transition-colors">Recipes</Link>
+          <Link href="/concierge" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-culina-green  transition-colors">AI Concierge</Link>
         </div>
       </nav>
       <CartDrawer />
