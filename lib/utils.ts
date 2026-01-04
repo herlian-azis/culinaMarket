@@ -5,21 +5,21 @@ export function getBaseUrl() {
         return '';
     }
 
-    // In production on Vercel - check multiple env vars
+    // Priority 1: Custom app URL (set manually in Vercel)
+    if (process.env.NEXT_PUBLIC_APP_URL) {
+        return process.env.NEXT_PUBLIC_APP_URL;
+    }
+
+    // Priority 2: Vercel system URL
     if (process.env.VERCEL_URL) {
         return `https://${process.env.VERCEL_URL}`;
     }
 
-    // Custom domain or NEXT_PUBLIC version
-    if (process.env.NEXT_PUBLIC_VERCEL_URL) {
-        return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`;
-    }
-
-    // Vercel production with custom domain
+    // Priority 3: Production URL
     if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
         return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
     }
 
-    // In development
+    // Development
     return 'http://localhost:3000';
 }
