@@ -1,36 +1,108 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🥗 CulinaMarket
 
-## Getting Started
+Premium grocery marketplace dengan AI Concierge yang membantu Anda menemukan resep dan bahan makanan.
 
-First, run the development server:
+![Next.js](https://img.shields.io/badge/Next.js-16.1-black?logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)
+![Supabase](https://img.shields.io/badge/Supabase-Database-green?logo=supabase)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38bdf8?logo=tailwindcss)
+
+## ✨ Fitur Utama
+
+- 🤖 **AI Concierge** - Asisten AI yang merekomendasikan resep berdasarkan bahan yang tersedia
+- 🛒 **Smart Shopping** - Tambahkan semua bahan resep ke keranjang dalam 1 klik
+- 📱 **Responsive Design** - Tampilan optimal di semua perangkat
+- 🔍 **Smart Search** - Cari produk dan resep dengan mudah
+- 👨‍🍳 **Recipe Management** - Kelola resep dengan info nutrisi lengkap
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 18+
+- npm atau yarn
+- Akun [Supabase](https://supabase.com)
+- API Key [OpenRouter](https://openrouter.ai) (untuk AI)
+
+### Installation
 
 ```bash
+# Clone repository
+git clone https://github.com/herlian-azis/culinaMarket.git
+cd culinaMarket
+
+# Install dependencies
+npm install
+
+# Setup environment
+cp EXAMPLE_ENV .env.local
+# Edit .env.local dengan credentials Anda
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Buka [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🔧 Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | URL Supabase project |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
+| `OPENROUTER_API_KEY` | API key untuk AI Concierge |
 
-## Learn More
+## 📁 Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+culinaMarket/
+├── app/                    # Next.js App Router
+│   ├── api/               # API Routes
+│   │   ├── chat/          # AI Concierge API
+│   │   ├── products/      # Products CRUD
+│   │   └── recipes/       # Recipes CRUD
+│   ├── admin/             # Admin dashboard
+│   ├── shop/              # Product catalog
+│   ├── recipes/           # Recipe pages
+│   └── concierge/         # AI Chat interface
+├── components/            # React components
+├── lib/                   # Utilities & configs
+│   ├── supabase.ts       # Supabase client
+│   └── utils.ts          # Helper functions
+└── public/               # Static assets
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🤖 AI Concierge
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+AI Concierge menggunakan model MiMo-V2-Flash melalui OpenRouter untuk:
 
-## Deploy on Vercel
+- **Product Query**: "Ada ayam?" → Menampilkan produk ayam
+- **Recipe Query**: "Resep ayam" → Menampilkan resep dengan semua bahan
+- **Bilingual**: Mendukung Bahasa Indonesia dan English
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🌐 Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Vercel (Recommended)
+
+1. Push ke GitHub
+2. Import di [Vercel](https://vercel.com)
+3. Tambahkan environment variables
+4. Deploy!
+
+Lihat [DEPLOY.md](DEPLOY.md) untuk panduan lengkap.
+
+## 🛠 Tech Stack
+
+- **Framework**: Next.js 16 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **Database**: Supabase (PostgreSQL)
+- **AI**: OpenRouter (MiMo-V2-Flash)
+- **Deployment**: Vercel
+
+## 📄 License
+
+MIT License - lihat [LICENSE](LICENSE) untuk detail.
+
+---
+
+Made with ❤️ by [Herlian Azis](https://github.com/herlian-azis)
