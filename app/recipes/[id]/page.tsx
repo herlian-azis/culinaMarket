@@ -5,9 +5,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Clock, ChefHat, Users, Flame, Zap, Beef, Wheat, Droplets, ArrowLeft, BookOpen } from 'lucide-react';
+import { getBaseUrl } from '@/lib/utils';
 
 async function getRecipe(id: string) {
-    const res = await fetch(`http://localhost:3000/api/recipes/${id}`, { cache: 'no-store' });
+    const res = await fetch(`${getBaseUrl()}/api/recipes/${id}`, { cache: 'no-store' });
     if (!res.ok) return null;
     return res.json();
 }

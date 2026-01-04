@@ -1,8 +1,9 @@
 import Navbar from '@/components/Navbar';
 import RecipeCard from '@/components/RecipeCard';
+import { getBaseUrl } from '@/lib/utils';
 
 async function getRecipes() {
-    const res = await fetch('http://localhost:3000/api/recipes', { cache: 'no-store' });
+    const res = await fetch(`${getBaseUrl()}/api/recipes`, { cache: 'no-store' });
     if (!res.ok) {
         console.error('Failed to fetch recipes:', res.statusText);
         return [];

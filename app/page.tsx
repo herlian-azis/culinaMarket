@@ -6,15 +6,16 @@ import Image from 'next/image';
 import { Bot, Leaf, Utensils, Truck, Carrot, Apple, Beef, Milk, Croissant, Package } from 'lucide-react';
 
 import RecipeCard from '@/components/RecipeCard';
+import { getBaseUrl } from '@/lib/utils';
 
 async function getProducts() {
-  const res = await fetch('http://localhost:3000/api/products', { cache: 'no-store' });
+  const res = await fetch(`${getBaseUrl()}/api/products`, { cache: 'no-store' });
   if (!res.ok) return [];
   return res.json();
 }
 
 async function getRecipes() {
-  const res = await fetch('http://localhost:3000/api/recipes', { cache: 'no-store' });
+  const res = await fetch(`${getBaseUrl()}/api/recipes`, { cache: 'no-store' });
   if (!res.ok) return [];
   return res.json();
 }

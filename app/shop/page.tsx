@@ -2,9 +2,10 @@
 import Navbar from '@/components/Navbar';
 import ShopGrid from '@/components/ShopGrid';
 import Link from 'next/link';
+import { getBaseUrl } from '@/lib/utils';
 
 async function getProducts() {
-    const res = await fetch('http://localhost:3000/api/products', { cache: 'no-store' });
+    const res = await fetch(`${getBaseUrl()}/api/products`, { cache: 'no-store' });
     if (!res.ok) {
         return [];
     }
